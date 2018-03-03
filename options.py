@@ -38,7 +38,7 @@ def get_options(option_type):
     tf.app.flags.DEFINE_integer("experience_history_size", 2000, "experience replay buffer size")
     tf.app.flags.DEFINE_integer("max_time_step", 10 * 10**7, "max time steps")
     tf.app.flags.DEFINE_integer("save_interval_step", 100 * 1000, "saving interval steps")
-    tf.app.flags.DEFINE_boolean("grad_norm_clip", 40.0, "gradient norm clipping")
+    tf.app.flags.DEFINE_float("grad_norm_clip", 40.0, "gradient norm clipping")
 
   # For display
   if option_type == 'display':

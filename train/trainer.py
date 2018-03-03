@@ -14,6 +14,7 @@ LOG_INTERVAL = 100
 PERFORMANCE_LOG_INTERVAL = 1000
 
 
+# noinspection PyInterpreter,PyInterpreter
 class Trainer(object):
   def __init__(self,
                thread_index,
@@ -159,7 +160,7 @@ class Trainer(object):
       last_action_reward = ExperienceFrame.concat_action_and_reward(last_action,
                                                                     self.action_size,
                                                                     last_reward)
-      
+      #Modify Last State - with attention
       pi_, value_ = self.local_network.run_base_policy_and_value(sess,
                                                                  self.environment.last_state,
                                                                  last_action_reward)
@@ -179,7 +180,7 @@ class Trainer(object):
       prev_state = self.environment.last_state
 
       # Process game
-      new_state, reward, terminal, pixel_change = self.environment.process(action)
+      new_state, reward, terminal, pixel_change = self.environment.process(action) #Modify New State - with attention
       frame = ExperienceFrame(prev_state, reward, action, terminal, pixel_change,
                               last_action, last_reward)
 

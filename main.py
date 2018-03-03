@@ -55,7 +55,8 @@ class Application(object):
       if parallel_index == 0 and self.global_t > self.next_save_steps:
         # Save checkpoint
         self.save()
-  
+
+      #Each env calls its own process #Process has sub tasks called within
       diff_global_t = trainer.process(self.sess,
                                       self.global_t,
                                       self.summary_writer,
@@ -99,7 +100,7 @@ class Application(object):
                                   clip_norm = flags.grad_norm_clip,
                                   device = device)
     
-    for i in range(flags.parallel_size):
+    for i in range(flags.parallel_size):             #Trainer creates a UnrealModel in init
       trainer = Trainer(i,
                         self.global_network,
                         initial_learning_rate,
@@ -159,7 +160,7 @@ class Application(object):
       self.wall_t = 0.0
       self.next_save_steps = flags.save_interval_step
   
-    # run training threads
+    # run training threads  ## Each Env is Running Here Parallel
     self.train_threads = []
     for i in range(flags.parallel_size):
       self.train_threads.append(threading.Thread(target=self.train_function, args=(i,True)))
