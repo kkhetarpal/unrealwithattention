@@ -5,7 +5,8 @@ env_args = [
   "--env_name nav_maze_static_01",
   "--use_pixel_change True",
   "--use_value_replay True",
-  "--use_reward_prediction True"
+  "--use_reward_prediction True",
+  "--use_attention_basenetwork True"
 ]
 
 py_binary(

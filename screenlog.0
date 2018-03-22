@@ -1,0 +1,44 @@
+[32mLoading:[0m 
+[1A[K[32mLoading:[0m 0 packages loaded
+[1A[K[32mAnalyzing:[0m target //unrealwithattention:train (0 packages loaded)
+[1A[K[32mINFO: [0mAnalysed target //unrealwithattention:train (0 packages loaded).
+[32mBuilding:[0m no action
+[1A[K[32mINFO: [0mFound 1 target...
+[32mBuilding:[0m no action
+[1A[K[32m[0 / 1][0m [-----] BazelWorkspaceStatusAction stable-status.txt
+[1A[KTarget //unrealwithattention:train up-to-date:
+[32m[1 / 1][0m no action
+[1A[K  bazel-bin/unrealwithattention/train
+[32m[1 / 1][0m no action
+[1A[K[32mINFO: [0mElapsed time: 0.532s, Critical Path: 0.00s
+[32m[1 / 1][0m no action
+[1A[K[32mINFO:[0m Build completed successfully, 1 total action
+
+[32mINFO: [0mRunning command line: bazel-bin/unrealwithattention/train --env_type lab --env_name nav_maze_static_01 --use_pixel_change True --use_value_replay True --use_reward_prediction True --use_attention_basenetwork True
+Traceback (most recent call last):
+  File "/tmp/.bazel/kkheta2/execroot/org_deepmind_lab/bazel-out/k8-fastbuild/bin/unrealwithattention/train.runfiles/org_deepmind_lab/unrealwithattention/main.py", line 6, in <module>
+    import tensorflow as tf
+  File "/home/ml/kkheta2/.local/lib/python2.7/site-packages/tensorflow/__init__.py", line 24, in <module>
+    from tensorflow.python import *
+  File "/home/ml/kkheta2/.local/lib/python2.7/site-packages/tensorflow/python/__init__.py", line 49, in <module>
+    from tensorflow.python import pywrap_tensorflow
+  File "/home/ml/kkheta2/.local/lib/python2.7/site-packages/tensorflow/python/pywrap_tensorflow.py", line 74, in <module>
+    raise ImportError(msg)
+ImportError: Traceback (most recent call last):
+  File "/home/ml/kkheta2/.local/lib/python2.7/site-packages/tensorflow/python/pywrap_tensorflow.py", line 58, in <module>
+    from tensorflow.python.pywrap_tensorflow_internal import *
+  File "/home/ml/kkheta2/.local/lib/python2.7/site-packages/tensorflow/python/pywrap_tensorflow_internal.py", line 28, in <module>
+    _pywrap_tensorflow_internal = swig_import_helper()
+  File "/home/ml/kkheta2/.local/lib/python2.7/site-packages/tensorflow/python/pywrap_tensorflow_internal.py", line 24, in swig_import_helper
+    _mod = imp.load_module('_pywrap_tensorflow_internal', fp, pathname, description)
+ImportError: libcublas.so.9.0: cannot open shared object file: No such file or directory
+
+
+Failed to load the native TensorFlow runtime.
+
+See https://www.tensorflow.org/install/install_sources#common_installation_problems
+
+for some common reasons and solutions.  Include the entire stack trace
+above this error message when asking for help.
+[31m[1mERROR: [0mNon-zero return code '1' from command: Process exited with status 1
+[0m

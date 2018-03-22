@@ -10,9 +10,46 @@ from environment.environment import Environment
 from model.model import UnrealModel
 from train.experience import Experience, ExperienceFrame
 
+#---------------------------------------------------#
+#---------------------------------------------------#
+#SAM imports
+#---------------------------------------------------#
+from keras.optimizers import RMSprop
+from keras.callbacks import EarlyStopping, ModelCheckpoint, LearningRateScheduler
+from keras.layers import Input
+from keras.models import Model
+import os, cv2, sys, time
+from sam.config import *
+from sam.utilities import preprocess_image, preprocess_images, preprocess_maps, preprocess_fixmaps, postprocess_predictions
+from sam.models import sam_vgg, sam_resnet, kl_divergence, correlation_coefficient, nss
+
+import os, cv2, sys
+
+
 LOG_INTERVAL = 100
 PERFORMANCE_LOG_INTERVAL = 1000
 
+# def generator(b_s, phase_gen='train'):
+#     if phase_gen == 'train':
+#         images = [imgs_train_path + f for f in os.listdir(imgs_train_path) if f.endswith(('.jpg', '.jpeg', '.png'))]
+#         maps = [maps_train_path + f for f in os.listdir(maps_train_path) if f.endswith(('.jpg', '.jpeg', '.png'))]
+#         fixs = [fixs_train_path + f for f in os.listdir(fixs_train_path) if f.endswith('.mat')]
+#     elif phase_gen == 'val':
+#         images = [imgs_val_path + f for f in os.listdir(imgs_val_path) if f.endswith(('.jpg', '.jpeg', '.png'))]
+#         maps = [maps_val_path + f for f in os.listdir(maps_val_path) if f.endswith(('.jpg', '.jpeg', '.png'))]
+#         fixs = [fixs_val_path + f for f in os.listdir(fixs_val_path) if f.endswith('.mat')]
+#     else:
+#         raise NotImplementedError
+#     images.sort()
+#     maps.sort()
+#     fixs.sort()
+#     gaussian = np.zeros((b_s, nb_gaussian, shape_r_gt, shape_c_gt))
+#     counter = 0
+#     while True:
+#         Y = preprocess_maps(maps[counter:counter+b_s], shape_r_out, shape_c_out)
+#         Y_fix = preprocess_fixmaps(fixs[counter:counter + b_s], shape_r_out, shape_c_out)
+#         yield [preprocess_images(images[counter:counter + b_s], shape_r, shape_c), gaussian], [Y, Y, Y_fix]
+#         counter = (counter + b_s) % len(images)
 
 # noinspection PyInterpreter,PyInterpreter
 class Trainer(object):
@@ -27,6 +64,7 @@ class Trainer(object):
                use_pixel_change,
                use_value_replay,
                use_reward_prediction,
+               use_attention_basenetwork,
                pixel_change_lambda,
                entropy_beta,
                local_t_max,
@@ -34,7 +72,8 @@ class Trainer(object):
                gamma_pc,
                experience_history_size,
                max_global_time_step,
-               device):
+               device,
+               attention_network=None):
 
     self.thread_index = thread_index
     self.learning_rate_input = learning_rate_input
@@ -43,6 +82,8 @@ class Trainer(object):
     self.use_pixel_change = use_pixel_change
     self.use_value_replay = use_value_replay
     self.use_reward_prediction = use_reward_prediction
+    #print("Jawan: " + str(use_attention_basenetwork))
+    self.use_attention_basenetwork = use_attention_basenetwork
     self.local_t_max = local_t_max
     self.gamma = gamma
     self.gamma_pc = gamma_pc
@@ -55,6 +96,7 @@ class Trainer(object):
                                      use_pixel_change,
                                      use_value_replay,
                                      use_reward_prediction,
+                                     use_attention_basenetwork,
                                      pixel_change_lambda,
                                      entropy_beta,
                                      device)
@@ -72,10 +114,13 @@ class Trainer(object):
     # For log output
     self.prev_local_t = 0
 
+    self.attention_network = attention_network
+
   def prepare(self):
     self.environment = Environment.create_environment(self.env_type,
-                                                      self.env_name)
-
+                                                      self.env_name,
+                                                      use_attention_basenetwork=self.use_attention_basenetwork, #Using Attention
+                                                      attention_network=self.attention_network)
   def stop(self):
     self.environment.stop()
     
@@ -151,24 +196,43 @@ class Trainer(object):
     terminal_end = False
 
     start_lstm_state = self.local_network.base_lstm_state_out
+    #import pdb; pdb.set_trace()
 
+    #outfolder = '/home/ml/kkheta2/lab/unrealwithattention/attentionframes/'
     # t_max times loop
-    for _ in range(self.local_t_max):
+    for z in range(self.local_t_max):
       # Prepare last action reward
       last_action = self.environment.last_action
       last_reward = self.environment.last_reward
       last_action_reward = ExperienceFrame.concat_action_and_reward(last_action,
                                                                     self.action_size,
                                                                     last_reward)
-      #Modify Last State - with attention
+      #Use attention based state if flag is true
+      # if self.use_attention_basenetwork:
+      #   pi_, value_ = self.local_network.run_base_policy_and_value(sess,
+      #                                                              self.environment.last_state_with_attention, #5 Sec
+      #                                                              last_action_reward)
+      # else:
+      #   pi_, value_ = self.local_network.run_base_policy_and_value(sess,
+      #                                                            self.environment.last_state, #84*84*3 #Almost 0 Sec
+      #                                                            last_action_reward)
+
+      if self.use_attention_basenetwork:
+        self.environment.last_state = self.environment.last_state_with_attention
+
       pi_, value_ = self.local_network.run_base_policy_and_value(sess,
-                                                                 self.environment.last_state,
+                                                                 self.environment.last_state,  # 84*84*3 #Almost 0 Sec
                                                                  last_action_reward)
-      
-      
+
       action = self.choose_action(pi_)
 
+      # if self.use_attention_basenetwork:
+      #   states.append(self.environment.last_state_with_attention) # -5 Sec
+      # else:
+      #   states.append(self.environment.last_state)
+
       states.append(self.environment.last_state)
+
       last_action_rewards.append(last_action_reward)
       actions.append(action)
       values.append(value_)
@@ -177,10 +241,20 @@ class Trainer(object):
         print("pi={}".format(pi_))
         print(" V={}".format(value_))
 
+      # if self.use_attention_basenetwork:
+      #   prev_state = self.environment.last_state_with_attention # -5 Sec
+      # else:
+      #   prev_state = self.environment.last_state
+
       prev_state = self.environment.last_state
 
       # Process game
-      new_state, reward, terminal, pixel_change = self.environment.process(action) #Modify New State - with attention
+      if self.use_attention_basenetwork:
+        new_state, reward, terminal, pixel_change = self.environment.process_with_attention(action) #5 Sec
+      else:
+        new_state, reward, terminal, pixel_change = self.environment.process(action)
+
+
       frame = ExperienceFrame(prev_state, reward, action, terminal, pixel_change,
                               last_action, last_reward)
 
@@ -196,6 +270,7 @@ class Trainer(object):
       if terminal:
         terminal_end = True
         print("score={}".format(self.episode_reward))
+        sys.stdout.flush()
 
         self._record_score(sess, summary_writer, summary_op, score_input,
                            self.episode_reward, global_t)
@@ -346,12 +421,18 @@ class Trainer(object):
     sess.run( self.sync )
 
     # [Base]
+    timebaseprocess_start = time.time()
     batch_si, batch_last_action_rewards, batch_a, batch_adv, batch_R, start_lstm_state = \
           self._process_base(sess,
                              global_t,
                              summary_writer,
                              summary_op,
                              score_input)
+    timebaseprocess_stop = time.time()
+    timebaseprocess = timebaseprocess_stop - timebaseprocess_start
+    print("Time for base A3C process: ", timebaseprocess)
+    sys.stdout.flush()
+
     feed_dict = {
       self.local_network.base_input: batch_si,
       self.local_network.base_last_action_reward_input: batch_last_action_rewards,
@@ -365,7 +446,12 @@ class Trainer(object):
 
     # [Pixel change]
     if self.use_pixel_change:
+      timePCprocess_start = time.time()
       batch_pc_si, batch_pc_last_action_reward, batch_pc_a, batch_pc_R = self._process_pc(sess)
+      timePCprocess_stop = time.time()
+      timePCprocess = timePCprocess_stop - timePCprocess_start
+      print("Time for base Pixel Change process: ", timePCprocess)
+      sys.stdout.flush()
 
       pc_feed_dict = {
         self.local_network.pc_input: batch_pc_si,
@@ -377,7 +463,12 @@ class Trainer(object):
 
     # [Value replay]
     if self.use_value_replay:
+      timeVRprocess_start = time.time()
       batch_vr_si, batch_vr_last_action_reward, batch_vr_R = self._process_vr(sess)
+      timeVRprocess_stop = time.time()
+      timeVRprocess = timeVRprocess_stop - timeVRprocess_start
+      print("Time for base Value Replay process: ", timeVRprocess)
+      sys.stdout.flush()
       
       vr_feed_dict = {
         self.local_network.vr_input: batch_vr_si,
@@ -388,7 +479,12 @@ class Trainer(object):
 
     # [Reward prediction]
     if self.use_reward_prediction:
+      timeRPprocess_start = time.time()
       batch_rp_si, batch_rp_c = self._process_rp()
+      timeRPprocess_stop = time.time()
+      timeRPprocess = timeRPprocess_stop - timeRPprocess_start
+      print("Time for base Reward Prediction process: ", timeRPprocess)
+      sys.stdout.flush()
       rp_feed_dict = {
         self.local_network.rp_input: batch_rp_si,
         self.local_network.rp_c_target: batch_rp_c

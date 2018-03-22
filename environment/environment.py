@@ -10,13 +10,14 @@ class Environment(object):
   action_size = -1
   
   @staticmethod
-  def create_environment(env_type, env_name):
+  def create_environment(env_type, env_name, use_attention_basenetwork=False, attention_network=None):
     if env_type == 'maze':
       from . import maze_environment
       return maze_environment.MazeEnvironment()
     elif env_type == 'lab':
       from . import lab_environment
-      return lab_environment.LabEnvironment(env_name)
+      #print("Buddha : " + str(not use_attention_basenetwork))
+      return lab_environment.LabEnvironment(env_name,use_attention_basenetwork, attention_network=attention_network)
     else:
       from . import gym_environment
       return gym_environment.GymEnvironment(env_name)

@@ -33,6 +33,7 @@ class UnrealModel(object):
                use_pixel_change,
                use_value_replay,
                use_reward_prediction,
+               use_attention_basenetwork,
                pixel_change_lambda,
                entropy_beta,
                device,
@@ -43,6 +44,7 @@ class UnrealModel(object):
     self._use_pixel_change = use_pixel_change
     self._use_value_replay = use_value_replay
     self._use_reward_prediction = use_reward_prediction
+    self._use_attention_basenetwork = use_attention_basenetwork
     self._pixel_change_lambda = pixel_change_lambda
     self._entropy_beta = entropy_beta
     
