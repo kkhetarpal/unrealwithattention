@@ -120,7 +120,7 @@ def saliencyattentivemodel_modified(attention_network, inputimage):
 def mysaliency_on_frame_colormap(saliency, frame):
     height, width, _ = frame.shape
     #import pdb;pdb.set_trace()
-    saliency = cv2.resize(saliency, (84, 84))  #original image was 84*84
+    #saliency = cv2.resize(saliency, (84, 84))  #original image was 84*84
     saliency_new = np.broadcast_to(np.expand_dims(saliency, 2), (saliency.shape[0],saliency.shape[1],3))
     heatmap = cv2.applyColorMap(saliency_new, cv2.COLORMAP_JET)
     result = heatmap * 0.4 + frame * 0.5
@@ -135,8 +135,8 @@ def worker(conn, env_name):
     ['RGB_INTERLACED'],
     config={
       'fps': str(60),
-      'width': str(84),        #84
-      'height': str(84)        #84
+      'width': str(480),        #84
+      'height': str(360)        #84
     })
   conn.send(0)
   
@@ -217,11 +217,9 @@ class LabEnvironment(environment.Environment):
     print("lab environment stopped")
     
   def _preprocess_frame(self, image):
-    #image = cv2.resize(image, (84,84)) #reverting back to 84*84 for baseline code
+    image = cv2.resize(image, (84,84)) #reverting back to 84*84 for baseline code
     image = image.astype(np.float32)
     image = image / 255.0
-    #cv2.imshow("Observation/255", image)
-    #cv2.waitKey(10)
     return image
 
   def _preprocess_frame_with_attention(self, image):

@@ -82,7 +82,7 @@ class Application(object):
   def run(self):
     device = "/cpu:0"
     if USE_GPU:
-      device = "/gpu:0"
+      device = "/gpu:1"
     
     initial_learning_rate = log_uniform(flags.initial_alpha_low,
                                         flags.initial_alpha_high,

@@ -207,29 +207,11 @@ class Trainer(object):
       last_action_reward = ExperienceFrame.concat_action_and_reward(last_action,
                                                                     self.action_size,
                                                                     last_reward)
-      #Use attention based state if flag is true
-      # if self.use_attention_basenetwork:
-      #   pi_, value_ = self.local_network.run_base_policy_and_value(sess,
-      #                                                              self.environment.last_state_with_attention, #5 Sec
-      #                                                              last_action_reward)
-      # else:
-      #   pi_, value_ = self.local_network.run_base_policy_and_value(sess,
-      #                                                            self.environment.last_state, #84*84*3 #Almost 0 Sec
-      #                                                            last_action_reward)
-
-      if self.use_attention_basenetwork:
-        self.environment.last_state = self.environment.last_state_with_attention
-
       pi_, value_ = self.local_network.run_base_policy_and_value(sess,
-                                                                 self.environment.last_state,  # 84*84*3 #Almost 0 Sec
-                                                                 last_action_reward)
+                                                                   self.environment.last_state,
+                                                                   last_action_reward)
 
       action = self.choose_action(pi_)
-
-      # if self.use_attention_basenetwork:
-      #   states.append(self.environment.last_state_with_attention) # -5 Sec
-      # else:
-      #   states.append(self.environment.last_state)
 
       states.append(self.environment.last_state)
 
@@ -241,19 +223,13 @@ class Trainer(object):
         print("pi={}".format(pi_))
         print(" V={}".format(value_))
 
-      # if self.use_attention_basenetwork:
-      #   prev_state = self.environment.last_state_with_attention # -5 Sec
-      # else:
-      #   prev_state = self.environment.last_state
-
       prev_state = self.environment.last_state
 
       # Process game
       if self.use_attention_basenetwork:
-        new_state, reward, terminal, pixel_change = self.environment.process_with_attention(action) #5 Sec
+        new_state, reward, terminal, pixel_change = self.environment.process_with_attention(action)
       else:
         new_state, reward, terminal, pixel_change = self.environment.process(action)
-
 
       frame = ExperienceFrame(prev_state, reward, action, terminal, pixel_change,
                               last_action, last_reward)
