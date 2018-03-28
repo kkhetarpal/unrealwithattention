@@ -162,8 +162,12 @@ class Trainer(object):
                                                           self.environment.last_state,
                                                           last_action_reward)
     action = self.choose_action(pi_)
-    
-    new_state, reward, terminal, pixel_change = self.environment.process(action)
+
+
+    if self.use_attention_basenetwork:
+      new_state, reward, terminal, pixel_change = self.environment.process_with_attention(action)
+    else:
+      new_state, reward, terminal, pixel_change = self.environment.process(action)
     
     frame = ExperienceFrame(prev_state, reward, action, terminal, pixel_change,
                             last_action, last_reward)
