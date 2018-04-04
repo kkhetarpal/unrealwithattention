@@ -117,14 +117,23 @@ def saliencyattentivemodel_modified(attention_network, inputimage):
     #cv2.imwrite(output_folder + '%s' % outname, res.astype(int))
     return res.astype('uint8')
 
+
+#Overlay to Generate GBVS style heatmap on original image
 def mysaliency_on_frame_colormap(saliency, frame):
     height, width, _ = frame.shape
-    #import pdb;pdb.set_trace()
-    #saliency = cv2.resize(saliency, (84, 84))  #original image was 84*84
     saliency_new = np.broadcast_to(np.expand_dims(saliency, 2), (saliency.shape[0],saliency.shape[1],3))
     heatmap = cv2.applyColorMap(saliency_new, cv2.COLORMAP_JET)
     result = heatmap * 0.4 + frame * 0.5
     return result.astype('uint8')
+
+
+#My Saliency Function: Gives Regions Which are salient and rest all is black
+def mysaliency_on_frame(saliency, frame):
+    pmax = saliency.max()
+    saliency_normalized = saliency/pmax
+    saliency_normalized_new = np.broadcast_to(np.expand_dims(saliency_normalized, 2), (saliency.shape[0],saliency.shape[1],3))
+    frame = frame * saliency_normalized_new
+    return frame.astype('uint8')
 
 
 
@@ -203,8 +212,8 @@ class LabEnvironment(environment.Environment):
   def reset(self):
     self.conn.send([COMMAND_RESET, 0])
     obs = self.conn.recv()
-    if self.use_attention_basenetwork:
-        self.last_state_with_attention = self._preprocess_frame_with_attention(obs)
+    #if self.use_attention_basenetwork:
+        #self.last_state = self._preprocess_frame_with_attention(obs)
     self.last_state = self._preprocess_frame(obs)
     self.last_action = 0
     self.last_reward = 0
@@ -230,13 +239,15 @@ class LabEnvironment(environment.Environment):
     #time_stop = time.time()
    # time_taken = time_stop - time_start
     #print('Wrapper to Modified SAM takes:', time_taken)
-    image_with_attention = mysaliency_on_frame_colormap(image_salmap, image)
+    #image_with_attention = mysaliency_on_frame_colormap(image_salmap, image)
+    image_with_attention = mysaliency_on_frame(image_salmap, image)   #only salient parts
     #outname = 'S' + str(GlobalImageId)
     #cv2.imwrite('/home/ml/kkheta2/lab/unrealwithattention/attentionframes/' + '%s' % outname + '.png', image_with_attention)
     image_with_attention = image_with_attention.astype(np.float32)
     image_with_attention = image_with_attention / 255.0
     image_with_attention = cv2.resize(image_with_attention, (84, 84))  # reverting back to 84*84 for baseline code
     return image_with_attention
+
 
   def process(self, action):
     real_action = LabEnvironment.ACTION_LIST[action]
@@ -267,12 +278,46 @@ class LabEnvironment(environment.Environment):
     obs, reward, terminal = self.conn.recv()
 
     if not terminal:
-      timepreprocframewithattention_start = time.time()
+      #timepreprocframewithattention_start = time.time()
       state = self._preprocess_frame_with_attention(obs)
-      timepreprocframewithattention_stop = time.time()
-      timepreprocframewithattention = timepreprocframewithattention_stop - timepreprocframewithattention_start
-      print("Time to preprocess frame with attention: ", timepreprocframewithattention)
-      sys.stdout.flush()
+      #timepreprocframewithattention_stop = time.time()
+      #timepreprocframewithattention = timepreprocframewithattention_stop - timepreprocframewithattention_start
+      #print("Time to preprocess frame with attention: ", timepreprocframewithattention)
+      #sys.stdout.flush()
+    else:
+      state = self.last_state
+
+    pixel_change = self._calc_pixel_change(state, self.last_state)
+    self.last_state = state
+    self.last_action = action
+    self.last_reward = reward
+    return state, reward, terminal, pixel_change
+
+  def saliency_and_preprocess(self, salmap, obs):
+    image_with_attention = mysaliency_on_frame(salmap, obs)  # only salient parts
+    #global GlobalImageId
+    #GlobalImageId += 1
+    #outname = 'S' + str(GlobalImageId)
+    #cv2.imwrite('/home/ml/kkheta2/lab/unrealwithattention/attentionframes/' + '%s' % outname + '.png',image_with_attention)
+    image_with_attention = image_with_attention.astype(np.float32)
+    image_with_attention = image_with_attention / 255.0
+    state = cv2.resize(image_with_attention, (84, 84))  # reverting back to 84*84 for baseline code
+    return state
+
+
+  def process_with_attention_sampled(self, action, timestep):
+    real_action = LabEnvironment.ACTION_LIST[action]
+
+    self.conn.send([COMMAND_ACTION, real_action])
+    obs, reward, terminal = self.conn.recv()
+
+    if not terminal:
+      if (timestep % 10 == 0):
+        self.state_salmap = saliencyattentivemodel_modified(self.attention_network, obs)
+        #cv2.imwrite('/home/ml/kkheta2/lab/unrealwithattention/attentionframes/' + 'Salmap' + '.png',self.state_salmap)
+        state = self.saliency_and_preprocess(self.state_salmap, obs)
+      else:
+        state = self.saliency_and_preprocess(self.state_salmap, obs)
     else:
       state = self.last_state
 

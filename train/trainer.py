@@ -164,10 +164,10 @@ class Trainer(object):
     action = self.choose_action(pi_)
 
 
-    if self.use_attention_basenetwork:
-      new_state, reward, terminal, pixel_change = self.environment.process_with_attention(action)
-    else:
-      new_state, reward, terminal, pixel_change = self.environment.process(action)
+    #if self.use_attention_basenetwork:
+    #  new_state, reward, terminal, pixel_change = self.environment.process_with_attention(action)
+    #else:
+    new_state, reward, terminal, pixel_change = self.environment.process(action)
     
     frame = ExperienceFrame(prev_state, reward, action, terminal, pixel_change,
                             last_action, last_reward)
@@ -231,7 +231,12 @@ class Trainer(object):
 
       # Process game
       if self.use_attention_basenetwork:
-        new_state, reward, terminal, pixel_change = self.environment.process_with_attention(action)
+        #time_start = time.time()
+        new_state, reward, terminal, pixel_change = self.environment.process_with_attention_sampled(action, z)  #For every 10 time steps, SAM modifies frame, else usual output frame
+        #time_stop = time.time()
+       # time_procattsampled = time_stop - time_start
+        #print("Time to process frame with sampled attention: ", time_procattsampled)
+        #sys.stdout.flush()
       else:
         new_state, reward, terminal, pixel_change = self.environment.process(action)
 
@@ -401,17 +406,17 @@ class Trainer(object):
     sess.run( self.sync )
 
     # [Base]
-    timebaseprocess_start = time.time()
+    #timebaseprocess_start = time.time()
     batch_si, batch_last_action_rewards, batch_a, batch_adv, batch_R, start_lstm_state = \
           self._process_base(sess,
                              global_t,
                              summary_writer,
                              summary_op,
                              score_input)
-    timebaseprocess_stop = time.time()
-    timebaseprocess = timebaseprocess_stop - timebaseprocess_start
-    print("Time for base A3C process: ", timebaseprocess)
-    sys.stdout.flush()
+    #timebaseprocess_stop = time.time()
+    #timebaseprocess = timebaseprocess_stop - timebaseprocess_start
+    #print("Time for base A3C process: ", timebaseprocess)
+    #sys.stdout.flush()
 
     feed_dict = {
       self.local_network.base_input: batch_si,
@@ -426,12 +431,12 @@ class Trainer(object):
 
     # [Pixel change]
     if self.use_pixel_change:
-      timePCprocess_start = time.time()
+      #timePCprocess_start = time.time()
       batch_pc_si, batch_pc_last_action_reward, batch_pc_a, batch_pc_R = self._process_pc(sess)
-      timePCprocess_stop = time.time()
-      timePCprocess = timePCprocess_stop - timePCprocess_start
-      print("Time for base Pixel Change process: ", timePCprocess)
-      sys.stdout.flush()
+      #timePCprocess_stop = time.time()
+      #timePCprocess = timePCprocess_stop - timePCprocess_start
+      #print("Time for base Pixel Change process: ", timePCprocess)
+      #sys.stdout.flush()
 
       pc_feed_dict = {
         self.local_network.pc_input: batch_pc_si,
@@ -443,12 +448,12 @@ class Trainer(object):
 
     # [Value replay]
     if self.use_value_replay:
-      timeVRprocess_start = time.time()
+      #timeVRprocess_start = time.time()
       batch_vr_si, batch_vr_last_action_reward, batch_vr_R = self._process_vr(sess)
-      timeVRprocess_stop = time.time()
-      timeVRprocess = timeVRprocess_stop - timeVRprocess_start
-      print("Time for base Value Replay process: ", timeVRprocess)
-      sys.stdout.flush()
+      #timeVRprocess_stop = time.time()
+      #timeVRprocess = timeVRprocess_stop - timeVRprocess_start
+      #print("Time for base Value Replay process: ", timeVRprocess)
+      #sys.stdout.flush()
       
       vr_feed_dict = {
         self.local_network.vr_input: batch_vr_si,
@@ -459,12 +464,12 @@ class Trainer(object):
 
     # [Reward prediction]
     if self.use_reward_prediction:
-      timeRPprocess_start = time.time()
+      #timeRPprocess_start = time.time()
       batch_rp_si, batch_rp_c = self._process_rp()
-      timeRPprocess_stop = time.time()
-      timeRPprocess = timeRPprocess_stop - timeRPprocess_start
-      print("Time for base Reward Prediction process: ", timeRPprocess)
-      sys.stdout.flush()
+      #timeRPprocess_stop = time.time()
+      #timeRPprocess = timeRPprocess_stop - timeRPprocess_start
+      #print("Time for base Reward Prediction process: ", timeRPprocess)
+      #sys.stdout.flush()
       rp_feed_dict = {
         self.local_network.rp_input: batch_rp_si,
         self.local_network.rp_c_target: batch_rp_c
