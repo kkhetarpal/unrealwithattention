@@ -23,33 +23,8 @@ from sam.config import *
 from sam.utilities import preprocess_image, preprocess_images, preprocess_maps, preprocess_fixmaps, postprocess_predictions
 from sam.models import sam_vgg, sam_resnet, kl_divergence, correlation_coefficient, nss
 
-import os, cv2, sys
-
-
 LOG_INTERVAL = 100
 PERFORMANCE_LOG_INTERVAL = 1000
-
-# def generator(b_s, phase_gen='train'):
-#     if phase_gen == 'train':
-#         images = [imgs_train_path + f for f in os.listdir(imgs_train_path) if f.endswith(('.jpg', '.jpeg', '.png'))]
-#         maps = [maps_train_path + f for f in os.listdir(maps_train_path) if f.endswith(('.jpg', '.jpeg', '.png'))]
-#         fixs = [fixs_train_path + f for f in os.listdir(fixs_train_path) if f.endswith('.mat')]
-#     elif phase_gen == 'val':
-#         images = [imgs_val_path + f for f in os.listdir(imgs_val_path) if f.endswith(('.jpg', '.jpeg', '.png'))]
-#         maps = [maps_val_path + f for f in os.listdir(maps_val_path) if f.endswith(('.jpg', '.jpeg', '.png'))]
-#         fixs = [fixs_val_path + f for f in os.listdir(fixs_val_path) if f.endswith('.mat')]
-#     else:
-#         raise NotImplementedError
-#     images.sort()
-#     maps.sort()
-#     fixs.sort()
-#     gaussian = np.zeros((b_s, nb_gaussian, shape_r_gt, shape_c_gt))
-#     counter = 0
-#     while True:
-#         Y = preprocess_maps(maps[counter:counter+b_s], shape_r_out, shape_c_out)
-#         Y_fix = preprocess_fixmaps(fixs[counter:counter + b_s], shape_r_out, shape_c_out)
-#         yield [preprocess_images(images[counter:counter + b_s], shape_r, shape_c), gaussian], [Y, Y, Y_fix]
-#         counter = (counter + b_s) % len(images)
 
 # noinspection PyInterpreter,PyInterpreter
 class Trainer(object):
@@ -82,7 +57,6 @@ class Trainer(object):
     self.use_pixel_change = use_pixel_change
     self.use_value_replay = use_value_replay
     self.use_reward_prediction = use_reward_prediction
-    #print("Jawan: " + str(use_attention_basenetwork))
     self.use_attention_basenetwork = use_attention_basenetwork
     self.local_t_max = local_t_max
     self.gamma = gamma
@@ -164,10 +138,10 @@ class Trainer(object):
     action = self.choose_action(pi_)
 
 
-    #if self.use_attention_basenetwork:
-    #  new_state, reward, terminal, pixel_change = self.environment.process_with_attention(action)
-    #else:
-    new_state, reward, terminal, pixel_change = self.environment.process(action)
+    if self.use_attention_basenetwork:
+      new_state, reward, terminal, pixel_change = self.environment.process_with_attention(action)
+    else:
+      new_state, reward, terminal, pixel_change = self.environment.process(action)
     
     frame = ExperienceFrame(prev_state, reward, action, terminal, pixel_change,
                             last_action, last_reward)
@@ -200,7 +174,6 @@ class Trainer(object):
     terminal_end = False
 
     start_lstm_state = self.local_network.base_lstm_state_out
-    #import pdb; pdb.set_trace()
 
     #outfolder = '/home/ml/kkheta2/lab/unrealwithattention/attentionframes/'
     # t_max times loop
@@ -231,12 +204,7 @@ class Trainer(object):
 
       # Process game
       if self.use_attention_basenetwork:
-        #time_start = time.time()
-        new_state, reward, terminal, pixel_change = self.environment.process_with_attention_sampled(action, z)  #For every 10 time steps, SAM modifies frame, else usual output frame
-        #time_stop = time.time()
-       # time_procattsampled = time_stop - time_start
-        #print("Time to process frame with sampled attention: ", time_procattsampled)
-        #sys.stdout.flush()
+        new_state, reward, terminal, pixel_change = self.environment.process_with_attention(action)
       else:
         new_state, reward, terminal, pixel_change = self.environment.process(action)
 

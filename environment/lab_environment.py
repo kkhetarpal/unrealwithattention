@@ -19,7 +19,7 @@ import os, cv2, sys, time
 from sam.config import *
 from sam.utilities import preprocess_image, preprocess_images, preprocess_maps, preprocess_fixmaps, postprocess_predictions
 from sam.models import sam_vgg, sam_resnet, kl_divergence, correlation_coefficient, nss
-
+from sam.spectral_residual_saliency import SpectralResidualSaliency
 from environment import environment
 
 COMMAND_RESET     = 0
@@ -137,6 +137,13 @@ def mysaliency_on_frame(saliency, frame):
 
 
 
+def spectralsaliency(inputimage):
+    srs = SpectralResidualSaliency(inputimage)
+    map = srs.get_saliency_map()
+    return map
+
+
+
 def worker(conn, env_name):
   level = env_name
   env = deepmind_lab.Lab(
@@ -212,8 +219,8 @@ class LabEnvironment(environment.Environment):
   def reset(self):
     self.conn.send([COMMAND_RESET, 0])
     obs = self.conn.recv()
-    #if self.use_attention_basenetwork:
-        #self.last_state = self._preprocess_frame_with_attention(obs)
+    if self.use_attention_basenetwork:
+        self.last_state = self._preprocess_frame_with_attention(obs)
     self.last_state = self._preprocess_frame(obs)
     self.last_action = 0
     self.last_reward = 0
@@ -234,12 +241,8 @@ class LabEnvironment(environment.Environment):
   def _preprocess_frame_with_attention(self, image):
     #global GlobalImageId
     #GlobalImageId += 1
-    #time_start = time.time()
-    image_salmap = saliencyattentivemodel_modified(self.attention_network, image)   #saliencyattentivemodel(image)
-    #time_stop = time.time()
-   # time_taken = time_stop - time_start
-    #print('Wrapper to Modified SAM takes:', time_taken)
-    #image_with_attention = mysaliency_on_frame_colormap(image_salmap, image)
+    image_salmap = spectralsaliency(image) #spectral saliency
+    #image_salmap = saliencyattentivemodel_modified(self.attention_network, image)   #saliencyattentivemodel(image)
     image_with_attention = mysaliency_on_frame(image_salmap, image)   #only salient parts
     #outname = 'S' + str(GlobalImageId)
     #cv2.imwrite('/home/ml/kkheta2/lab/unrealwithattention/attentionframes/' + '%s' % outname + '.png', image_with_attention)
@@ -278,12 +281,7 @@ class LabEnvironment(environment.Environment):
     obs, reward, terminal = self.conn.recv()
 
     if not terminal:
-      #timepreprocframewithattention_start = time.time()
       state = self._preprocess_frame_with_attention(obs)
-      #timepreprocframewithattention_stop = time.time()
-      #timepreprocframewithattention = timepreprocframewithattention_stop - timepreprocframewithattention_start
-      #print("Time to preprocess frame with attention: ", timepreprocframewithattention)
-      #sys.stdout.flush()
     else:
       state = self.last_state
 
