@@ -20,7 +20,7 @@ def get_options(option_type):
   tf.app.flags.DEFINE_boolean("use_attention_basenetwork", False, "whether to use visual attention in base network")
   #tf.app.flags.DEFINE_string("checkpoint_dir", "/tmp/unreal_checkpoints", "checkpoint directory")
   #tf.app.flags.DEFINE_string("checkpoint_dir", "/tmp/unreal_log/unrealwithatt_log", "checkpoint directory")
-  tf.app.flags.DEFINE_string("checkpoint_dir", "/home/ml/kkheta2/tmp/unreal_checkpoints/temp", "checkpoint directory")
+  tf.app.flags.DEFINE_string("checkpoint_dir", "/home/ml/kkheta2/tmp/unreal_checkpoints", "checkpoint directory")
 
 
   # For training
@@ -31,7 +31,7 @@ def get_options(option_type):
     tf.app.flags.DEFINE_float("rmsp_epsilon", 0.1, "epsilon parameter for rmsprop")
 
     #tf.app.flags.DEFINE_string("log_file", "/tmp/unreal_log/unrealwithatt_log", "log file directory")
-    tf.app.flags.DEFINE_string("log_file", "/home/ml/kkheta2/tmp/unreal_checkpoints/temp/", "log file directory")
+    tf.app.flags.DEFINE_string("log_file", "/home/ml/kkheta2/tmp/unreal_checkpoints", "log file directory")
     tf.app.flags.DEFINE_float("initial_alpha_low", 1e-4, "log_uniform low limit for learning rate")
     tf.app.flags.DEFINE_float("initial_alpha_high", 5e-3, "log_uniform high limit for learning rate")
     tf.app.flags.DEFINE_float("initial_alpha_log_rate", 0.5, "log_uniform interpolate rate for learning rate")

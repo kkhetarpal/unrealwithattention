@@ -8,8 +8,6 @@ import threading
 
 import signal
 import math
-import os
-import time
 
 from environment.environment import Environment
 from model.model import UnrealModel
@@ -82,7 +80,7 @@ class Application(object):
   def run(self):
     device = "/cpu:0"
     if USE_GPU:
-      device = "/gpu:1"
+      device = "/gpu:0"
     
     initial_learning_rate = log_uniform(flags.initial_alpha_low,
                                         flags.initial_alpha_high,
@@ -118,33 +116,32 @@ class Application(object):
                                   device = device)
 
     attention_network = None
-    if flags.use_attention_basenetwork:
-        timeSAMcompilestart = time.time()
-        x = Input((3, shape_r, shape_c))
-        x_maps = Input((nb_gaussian, shape_r_gt, shape_c_gt))
-        # version (0 for SAM-VGG and 1 for SAM-ResNet)
-        if version == 0:
-            attention_network = Model(input=[x, x_maps], output=sam_vgg([x, x_maps]))
-            # print("Compiling SAM-VGG")
-            attention_network.compile(RMSprop(lr=1e-4), loss=[kl_divergence, correlation_coefficient, nss])
-        elif version == 1:
-            attention_network = Model(input=[x, x_maps], output=sam_resnet([x, x_maps]))
-            print("Compiling SAM-ResNet")
-            attention_network.compile(RMSprop(lr=1e-4), loss=[kl_divergence, correlation_coefficient, nss])
-        else:
-            raise NotImplementedError
-        if version == 0:
-            print("Loading SAM-VGG weights")
-            attention_network.load_weights('weights/sam-vgg_salicon_weights.pkl')
-        elif version == 1:
-            print("Loading SAM-ResNet weights")
-            attention_network.load_weights('/home/ml/kkheta2/lab/unrealwithattention/sam/weights/sam-resnet_salicon_weights.pkl')
-            sys.stdout.flush()
-        timeSAMcompilestop = time.time()
-        timeSAMcompile = timeSAMcompilestop - timeSAMcompilestart
-        print("Time fo SAM compile: ",timeSAMcompile)
+    # if flags.use_attention_basenetwork:
+    #     timeSAMcompilestart = time.time()
+    #     x = Input((3, shape_r, shape_c))
+    #     x_maps = Input((nb_gaussian, shape_r_gt, shape_c_gt))
+    #     # version (0 for SAM-VGG and 1 for SAM-ResNet)
+    #     if version == 0:
+    #         attention_network = Model(input=[x, x_maps], output=sam_vgg([x, x_maps]))
+    #         # print("Compiling SAM-VGG")
+    #         attention_network.compile(RMSprop(lr=1e-4), loss=[kl_divergence, correlation_coefficient, nss])
+    #     elif version == 1:
+    #         attention_network = Model(input=[x, x_maps], output=sam_resnet([x, x_maps]))
+    #         print("Compiling SAM-ResNet")
+    #         attention_network.compile(RMSprop(lr=1e-4), loss=[kl_divergence, correlation_coefficient, nss])
+    #     else:
+    #         raise NotImplementedError
+    #     if version == 0:
+    #         print("Loading SAM-VGG weights")
+    #         attention_network.load_weights('weights/sam-vgg_salicon_weights.pkl')
+    #     elif version == 1:
+    #         print("Loading SAM-ResNet weights")
+    #         attention_network.load_weights('/home/ml/kkheta2/lab/unrealwithattention/sam/weights/sam-resnet_salicon_weights.pkl')
+    #         sys.stdout.flush()
+    #     timeSAMcompilestop = time.time()
+    #     timeSAMcompile = timeSAMcompilestop - timeSAMcompilestart
+    #     print("Time fo SAM compile: ",timeSAMcompile)
     for i in range(flags.parallel_size):             #Trainer creates a UnrealModel in init
-      #print("Adhed: " + str(flags.use_attention_basenetwork))
       trainer = Trainer(i,
                         self.global_network,
                         initial_learning_rate,
