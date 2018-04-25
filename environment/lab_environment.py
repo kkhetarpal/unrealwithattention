@@ -143,6 +143,12 @@ def spectralsaliency(inputimage):
     return map
 
 
+def spectralsaliency_for_colormap(inputimage):
+    srs = SpectralResidualSaliency(inputimage)
+    map = srs.get_saliency_map()
+    map = map * 255
+    return map.astype('uint8')
+
 
 def worker(conn, env_name):
   level = env_name
@@ -241,9 +247,10 @@ class LabEnvironment(environment.Environment):
   def _preprocess_frame_with_attention(self, image):
     #global GlobalImageId
     #GlobalImageId += 1
-    image_salmap = spectralsaliency(image) #spectral saliency
+    image_salmap = spectralsaliency_for_colormap(image) #spectral saliency
     #image_salmap = saliencyattentivemodel_modified(self.attention_network, image)   #saliencyattentivemodel(image)
-    image_with_attention = mysaliency_on_frame(image_salmap, image)   #only salient parts
+    #image_with_attention = mysaliency_on_frame(image_salmap, image)   #only salient parts
+    image_with_attention = mysaliency_on_frame_colormap(image_salmap, image)  # heatmap
     #outname = 'S' + str(GlobalImageId)
     #cv2.imwrite('/home/ml/kkheta2/lab/unrealwithattention/attentionframes/' + '%s' % outname + '.png', image_with_attention)
     image_with_attention = image_with_attention.astype(np.float32)
