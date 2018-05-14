@@ -16,7 +16,7 @@ class Environment(object):
       return maze_environment.MazeEnvironment()
     elif env_type == 'lab':
       from . import lab_environment
-      return lab_environment.LabEnvironment(env_name,use_attention_basenetwork, attention_network=attention_network)
+      return lab_environment.LabEnvironment(env_name, use_attention_basenetwork, attention_network=attention_network)
     else:
       from . import gym_environment
       return gym_environment.GymEnvironment(env_name)

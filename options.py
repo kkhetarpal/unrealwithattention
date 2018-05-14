@@ -14,13 +14,14 @@ def get_options(option_type):
   # Common
   tf.app.flags.DEFINE_string("env_type", "lab", "environment type (lab or gym or maze)")
   tf.app.flags.DEFINE_string("env_name", "nav_maze_static_01",  "environment name")
+  tf.app.flags.DEFINE_boolean("frame_stack", False, "Stacking Frames")
   tf.app.flags.DEFINE_boolean("use_pixel_change", True, "whether to use pixel change")
   tf.app.flags.DEFINE_boolean("use_value_replay", True, "whether to use value function replay")
   tf.app.flags.DEFINE_boolean("use_reward_prediction", True, "whether to use reward prediction")
   tf.app.flags.DEFINE_boolean("use_attention_basenetwork", False, "whether to use visual attention in base network")
   #tf.app.flags.DEFINE_string("checkpoint_dir", "/tmp/unreal_checkpoints", "checkpoint directory")
   #tf.app.flags.DEFINE_string("checkpoint_dir", "/tmp/unreal_log/unrealwithatt_log", "checkpoint directory")
-  tf.app.flags.DEFINE_string("checkpoint_dir", "/home/ml/kkheta2/tmp/unreal_checkpoints", "checkpoint directory")
+  tf.app.flags.DEFINE_string("checkpoint_dir", "/home/ml/kkheta2/tmp/unreal_checkpoints/varying_degrees_foveation/alpha_0", "checkpoint directory")
 
 
   # For training
@@ -29,9 +30,7 @@ def get_options(option_type):
     tf.app.flags.DEFINE_integer("local_t_max", 20, "repeat step size")
     tf.app.flags.DEFINE_float("rmsp_alpha", 0.99, "decay parameter for rmsprop")
     tf.app.flags.DEFINE_float("rmsp_epsilon", 0.1, "epsilon parameter for rmsprop")
-
-    #tf.app.flags.DEFINE_string("log_file", "/tmp/unreal_log/unrealwithatt_log", "log file directory")
-    tf.app.flags.DEFINE_string("log_file", "/home/ml/kkheta2/tmp/unreal_checkpoints", "log file directory")
+    tf.app.flags.DEFINE_string("log_file", "/home/ml/kkheta2/tmp/unreal_checkpoints/varying_degrees_foveation/alpha_0", "log file directory")
     tf.app.flags.DEFINE_float("initial_alpha_low", 1e-4, "log_uniform low limit for learning rate")
     tf.app.flags.DEFINE_float("initial_alpha_high", 5e-3, "log_uniform high limit for learning rate")
     tf.app.flags.DEFINE_float("initial_alpha_log_rate", 0.5, "log_uniform interpolate rate for learning rate")

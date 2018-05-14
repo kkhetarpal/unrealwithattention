@@ -120,7 +120,7 @@ class UnrealModel(object):
                        reuse=False):
     with tf.variable_scope("base_lstm", reuse=reuse) as scope:
       # Weights
-      W_fc1, b_fc1 = self._fc_variable([2592, 256], "base_fc1")
+      W_fc1, b_fc1 = self._fc_variable([2592, 256], "base_fc1")   # [input_width_*input_height_*32, 256]
 
       # Nodes
       conv_output_flat = tf.reshape(conv_output, [-1, 2592])

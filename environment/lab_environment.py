@@ -149,6 +149,18 @@ def spectralsaliency_for_colormap(inputimage):
     map = map * 255
     return map.astype('uint8')
 
+#Alpha here controls the amount of foveation we want.
+# Alpha = 0: only salient parts are visible and rest all is black
+# Alpha = 1: entire frame is visible
+# Inbetween values of alpha show more than just fixated parts showing
+def mysaliency_on_frame_alpha(saliency, frame, alpha):
+    pmax = saliency.max()
+    saliency_normalized = saliency/pmax
+    saliency_normalized_new = np.broadcast_to(np.expand_dims(saliency_normalized, 2), (saliency.shape[0],saliency.shape[1],3))
+    frame = frame * (saliency_normalized_new + alpha * (1-saliency_normalized_new))
+    return frame.astype('uint8')
+
+
 
 def worker(conn, env_name):
   level = env_name
@@ -245,14 +257,8 @@ class LabEnvironment(environment.Environment):
     return image
 
   def _preprocess_frame_with_attention(self, image):
-    #global GlobalImageId
-    #GlobalImageId += 1
-    image_salmap = spectralsaliency_for_colormap(image) #spectral saliency
-    #image_salmap = saliencyattentivemodel_modified(self.attention_network, image)   #saliencyattentivemodel(image)
-    #image_with_attention = mysaliency_on_frame(image_salmap, image)   #only salient parts
-    image_with_attention = mysaliency_on_frame_colormap(image_salmap, image)  # heatmap
-    #outname = 'S' + str(GlobalImageId)
-    #cv2.imwrite('/home/ml/kkheta2/lab/unrealwithattention/attentionframes/' + '%s' % outname + '.png', image_with_attention)
+    image_salmap = spectralsaliency(image) #spectral residual saliency
+    image_with_attention = mysaliency_on_frame_alpha(image_salmap, image, 0.00)   #Run for 0.50, 0.25, 0.75, 1, 0
     image_with_attention = image_with_attention.astype(np.float32)
     image_with_attention = image_with_attention / 255.0
     image_with_attention = cv2.resize(image_with_attention, (84, 84))  # reverting back to 84*84 for baseline code
