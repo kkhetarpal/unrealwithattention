@@ -19,9 +19,7 @@ def get_options(option_type):
   tf.app.flags.DEFINE_boolean("use_value_replay", True, "whether to use value function replay")
   tf.app.flags.DEFINE_boolean("use_reward_prediction", True, "whether to use reward prediction")
   tf.app.flags.DEFINE_boolean("use_attention_basenetwork", False, "whether to use visual attention in base network")
-  #tf.app.flags.DEFINE_string("checkpoint_dir", "/tmp/unreal_checkpoints", "checkpoint directory")
-  #tf.app.flags.DEFINE_string("checkpoint_dir", "/tmp/unreal_log/unrealwithatt_log", "checkpoint directory")
-  tf.app.flags.DEFINE_string("checkpoint_dir", "/home/ml/kkheta2/tmp/unreal_checkpoints/varying_degrees_foveation/alpha_0", "checkpoint directory")
+  tf.app.flags.DEFINE_string("checkpoint_dir", "/home/ml/kkheta2/tmp/unreal_checkpoints/llarla/baseline/run2", "checkpoint directory")
 
 
   # For training
@@ -30,7 +28,7 @@ def get_options(option_type):
     tf.app.flags.DEFINE_integer("local_t_max", 20, "repeat step size")
     tf.app.flags.DEFINE_float("rmsp_alpha", 0.99, "decay parameter for rmsprop")
     tf.app.flags.DEFINE_float("rmsp_epsilon", 0.1, "epsilon parameter for rmsprop")
-    tf.app.flags.DEFINE_string("log_file", "/home/ml/kkheta2/tmp/unreal_checkpoints/varying_degrees_foveation/alpha_0", "log file directory")
+    tf.app.flags.DEFINE_string("log_file", "/home/ml/kkheta2/tmp/unreal_checkpoints/llarla/baseline/run2", "log file directory")
     tf.app.flags.DEFINE_float("initial_alpha_low", 1e-4, "log_uniform low limit for learning rate")
     tf.app.flags.DEFINE_float("initial_alpha_high", 5e-3, "log_uniform high limit for learning rate")
     tf.app.flags.DEFINE_float("initial_alpha_log_rate", 0.5, "log_uniform interpolate rate for learning rate")
@@ -45,8 +43,11 @@ def get_options(option_type):
 
   # For display
   if option_type == 'display':
-    tf.app.flags.DEFINE_string("frame_save_dir", "/tmp/unreal_frames", "frame save directory")
+    tf.app.flags.DEFINE_string("frame_save_dir", "/home/ml/kkheta2/tmp/unreal_checkpoints/llarla/baseline/seekavoid_arena_01", "frame save directory")
     tf.app.flags.DEFINE_boolean("recording", False, "whether to record movie")
     tf.app.flags.DEFINE_boolean("frame_saving", False, "whether to save frames")
+    tf.app.flags.DEFINE_boolean("testing", False, "whether to Test performance on k games while display")
+    tf.app.flags.DEFINE_integer("k_games", 1, "Number of games we want to test on")
+
 
   return tf.app.flags.FLAGS

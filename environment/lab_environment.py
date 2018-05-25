@@ -6,6 +6,10 @@ from __future__ import print_function
 from multiprocessing import Process, Pipe
 import numpy as np
 import deepmind_lab
+import random
+import skimage
+from skimage import data
+from skimage import color
 
 #---------------------------------------------------#
 #---------------------------------------------------#
@@ -24,11 +28,36 @@ from environment import environment
 
 COMMAND_RESET     = 0
 COMMAND_ACTION    = 1
+
+
+
+
 COMMAND_TERMINATE = 2
 GlobalImageId = 0
+global_alpha = 0.65
 
 
 sys.stdout.flush()
+
+
+def colorize(image, hue, saturation=1):
+    """ Add color of the given hue to an RGB image.
+
+    By default, set the saturation to 1 so that the colors pop!
+    """
+    hsv = color.rgb2hsv(image)
+    hsv[:, :, 1] = saturation
+    hsv[:, :, 0] = hue
+    return (color.hsv2rgb(hsv)*255)
+
+
+def change_background_color(image, hue):
+    tinted_image = colorize(image, hue, saturation=0.5)
+    return tinted_image
+
+def add_gaussian_noise(image):
+    out = skimage.util.random_noise(image, mode='gaussian', seed=None, clip=True)
+    return (out*255)
 
 def generator(b_s, phase_gen='train'):
     if phase_gen == 'train':
@@ -160,8 +189,6 @@ def mysaliency_on_frame_alpha(saliency, frame, alpha):
     frame = frame * (saliency_normalized_new + alpha * (1-saliency_normalized_new))
     return frame.astype('uint8')
 
-
-
 def worker(conn, env_name):
   level = env_name
   env = deepmind_lab.Lab(
@@ -250,15 +277,34 @@ class LabEnvironment(environment.Environment):
     self.proc.join()
     print("lab environment stopped")
     
+  # def _preprocess_frame(self, image):
+  #   image = cv2.resize(image, (84,84)) #reverting back to 84*84 for baseline code
+  #   image = image.astype(np.float32)
+  #   image = image / 255.0
+  #   return image
+
+  # Use this preprocess Zero shot testing with Tinted Images
   def _preprocess_frame(self, image):
-    image = cv2.resize(image, (84,84)) #reverting back to 84*84 for baseline code
-    image = image.astype(np.float32)
-    image = image / 255.0
-    return image
+    #if np.random.rand() < 0.5:
+        #hue = random.uniform(0, 1)
+        #image = change_background_color(image, hue)
+    #image1 = add_gaussian_noise(image)
+    image1 = cv2.resize(image, (84,84)) #reverting back to 84*84 for baseline code
+    image1 = image1.astype(np.float32)
+    image1 = image1 / 255.0
+    return image1
+
 
   def _preprocess_frame_with_attention(self, image):
+    #if np.random.rand() < 0.5:
+    #hue = random.uniform(0, 1)
+    #image = change_background_color(image, hue)
+    #image = add_gaussian_noise(image)
     image_salmap = spectralsaliency(image) #spectral residual saliency
-    image_with_attention = mysaliency_on_frame_alpha(image_salmap, image, 0.00)   #Run for 0.50, 0.25, 0.75, 1, 0
+    image_with_attention = mysaliency_on_frame_alpha(image_salmap, image, alpha=global_alpha)   #Run for 0.50, 0.25, 0.75, 1, 0
+    #output_folder ='/home/ml/kkheta2/lab/unrealwithattention/attentionframes/debugging/'
+    #outname = 'FoveatedImage.jpg'
+    #cv2.imwrite(output_folder + '%s' % outname, image_with_attention.astype(int))
     image_with_attention = image_with_attention.astype(np.float32)
     image_with_attention = image_with_attention / 255.0
     image_with_attention = cv2.resize(image_with_attention, (84, 84))  # reverting back to 84*84 for baseline code
@@ -272,12 +318,7 @@ class LabEnvironment(environment.Environment):
     obs, reward, terminal = self.conn.recv()
 
     if not terminal:
-      timepreprocframe_start = time.time()
       state = self._preprocess_frame(obs)
-      timepreprocframe_stop = time.time()
-      timepreprocframe = timepreprocframe_stop - timepreprocframe_start
-      print("Time to preprocess frame without attention: ", timepreprocframe)
-      sys.stdout.flush()
     else:
       state = self.last_state
     

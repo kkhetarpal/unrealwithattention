@@ -6,7 +6,7 @@ from __future__ import print_function
 import tensorflow as tf
 import numpy as np
 import cv2
-import os
+import os, sys
 from collections import deque
 import pygame
 
@@ -23,6 +23,9 @@ WHITE = (255, 255, 255)
 
 # get command line args
 flags = get_options("display")
+print("Flags: K games /n", flags.k_games)
+print("Flags: Testing Value /n", flags.testing)
+
 
 
 class MovieWriter(object):
@@ -31,7 +34,9 @@ class MovieWriter(object):
     frame_size is (w, h)
     """
     self._frame_size = frame_size
-    fourcc = cv2.cv.CV_FOURCC('m', 'p', '4', 'v')
+    #fourcc = cv2.cv.CV_FOURCC('m', 'p', '4', 'v')
+    #fourcc = cv2.CV_FOURCC('m', 'p', '4', 'v')
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
     self.vout = cv2.VideoWriter()
     success = self.vout.open(file_name, fourcc, fps, frame_size, True)
     if not success:
@@ -93,15 +98,18 @@ class Display(object):
                                       flags.use_pixel_change,
                                       flags.use_value_replay,
                                       flags.use_reward_prediction,
+                                      flags.use_attention_basenetwork,
                                       0.0,
                                       0.0,
                                       "/cpu:0",
                                       for_display=True)
-    self.environment = Environment.create_environment(flags.env_type, flags.env_name)
+    self.environment = Environment.create_environment(flags.env_type, flags.env_name, flags.use_attention_basenetwork)
     self.font = pygame.font.SysFont(None, 20)
     self.value_history = ValueHistory()
     self.state_history = StateHistory()
     self.episode_reward = 0
+    self.total_reward = []
+    self.game_count = 0
 
   def update(self, sess):
     self.surface.fill(BLACK)
@@ -251,10 +259,24 @@ class Display(object):
     self.value_history.add_value(v_value)
     
     action = self.choose_action(pi_values)
-    state, reward, terminal, pixel_change = self.environment.process(action)
+
+    if flags.use_attention_basenetwork:
+      print("I am inside attention")
+      state, reward, terminal, pixel_change = self.environment.process_with_attention(action)
+    else:
+      state, reward, terminal, pixel_change = self.environment.process(action)
+
     self.episode_reward += reward
+    #print("Episode reward is /n", self.episode_reward)
   
     if terminal:
+      print("----------------------------------------------------------------- /n ")
+      print("Score for the entire game  is /n", self.episode_reward)
+      print("----------------------------------------------------------------- /n ")
+      sys.stdout.flush()
+      self.total_reward.append(self.episode_reward)
+      self.game_count += 1
+
       self.environment.reset()
       self.episode_reward = 0
       
@@ -305,12 +327,17 @@ def main(args):
     frame_count = 0
     if not os.path.exists(flags.frame_save_dir):
       os.mkdir(flags.frame_save_dir)
-      
+
+
   while running:
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
         running = False
-        
+
+    #print("Game Count: /n", display.game_count)
+    if (flags.testing and (display.game_count == flags.k_games)):
+      running = False
+
     display.update(sess)
     clock.tick(FPS)
     
@@ -324,10 +351,11 @@ def main(args):
         frame_file_path = "{0}/{1:06d}.png".format(flags.frame_save_dir, frame_count)
         cv2.imwrite(frame_file_path, d)
         frame_count += 1
-  
+
   if flags.recording:
     writer.close()
 
-    
+  print("Average score and variance for k games = %f %f " % (np.mean(display.total_reward) , np.std(display.total_reward)))
+
 if __name__ == '__main__':
   tf.app.run()
