@@ -30,8 +30,6 @@ COMMAND_RESET     = 0
 COMMAND_ACTION    = 1
 
 
-
-
 COMMAND_TERMINATE = 2
 GlobalImageId = 0
 global_alpha = 0.65
@@ -277,18 +275,17 @@ class LabEnvironment(environment.Environment):
     self.proc.join()
     print("lab environment stopped")
     
-  # def _preprocess_frame(self, image):
-  #   image = cv2.resize(image, (84,84)) #reverting back to 84*84 for baseline code
-  #   image = image.astype(np.float32)
-  #   image = image / 255.0
-  #   return image
+ # def _preprocess_frame(self, image):
+ #   image = cv2.resize(image, (84,84)) #reverting back to 84*84 for baseline code
+ #   image = image.astype(np.float32)
+ #   image = image / 255.0
+ #   return image
 
   # Use this preprocess Zero shot testing with Tinted Images
   def _preprocess_frame(self, image):
     #if np.random.rand() < 0.5:
         #hue = random.uniform(0, 1)
-        #image = change_background_color(image, hue)
-    #image1 = add_gaussian_noise(image)
+     #   image = change_background_color(image, 0.1)
     image1 = cv2.resize(image, (84,84)) #reverting back to 84*84 for baseline code
     image1 = image1.astype(np.float32)
     image1 = image1 / 255.0
@@ -296,14 +293,20 @@ class LabEnvironment(environment.Environment):
 
 
   def _preprocess_frame_with_attention(self, image):
+    #output_folder = '/home/ml/kkheta2/lab/unrealwithattention/attentionframes/debugging/'
+    #outname = 'OriginalImage' + i + '.jpg'
+    # global GlobalImageId
+    # GlobalImageId += 1
+    # outname = 'S' + str(GlobalImageId) + '.jpg'
+    # cv2.imwrite(output_folder + '%s' % outname, image.astype(int))
     #if np.random.rand() < 0.5:
-    #hue = random.uniform(0, 1)
-    #image = change_background_color(image, hue)
-    #image = add_gaussian_noise(image)
+        #hue = random.uniform(0, 1)
+        #image = change_background_color(image, 0.1)
+        #image = add_gaussian_noise(image)
     image_salmap = spectralsaliency(image) #spectral residual saliency
     image_with_attention = mysaliency_on_frame_alpha(image_salmap, image, alpha=global_alpha)   #Run for 0.50, 0.25, 0.75, 1, 0
     #output_folder ='/home/ml/kkheta2/lab/unrealwithattention/attentionframes/debugging/'
-    #outname = 'FoveatedImage.jpg'
+    #outname = 'FImage' + str(GlobalImageId) + #'.jpg'
     #cv2.imwrite(output_folder + '%s' % outname, image_with_attention.astype(int))
     image_with_attention = image_with_attention.astype(np.float32)
     image_with_attention = image_with_attention / 255.0

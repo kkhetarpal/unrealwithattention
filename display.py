@@ -261,7 +261,7 @@ class Display(object):
     action = self.choose_action(pi_values)
 
     if flags.use_attention_basenetwork:
-      print("I am inside attention")
+      #print("I am inside attention")
       state, reward, terminal, pixel_change = self.environment.process_with_attention(action)
     else:
       state, reward, terminal, pixel_change = self.environment.process(action)
