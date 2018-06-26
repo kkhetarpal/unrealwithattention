@@ -3,25 +3,14 @@
 [![CircleCI](https://circleci.com/gh/miyosuda/unreal.svg?style=svg)](https://circleci.com/gh/miyosuda/unreal)
 
 ## About
+Code accompanying paper "Attend Before you Act: Leveraging human visual attention for continual learning" - at Lifelong Learning: A Reinforcement Learning Approach Workshop @ ICML 2018 
 
-Replicating UNREAL algorithm described in Google Deep Mind's paper "Reinforcement learning with unsupervised auxiliary tasks."
-
-https://arxiv.org/pdf/1611.05397.pdf
+Paper Link: 
 
 Implemented with TensorFlow and DeepMind Lab environment.
 
-## Preview
-seekavoid_arena_01
-
-[![seekavoid_arena_01](./doc/display0.png)](https://youtu.be/1jF3gAdXfio)
-
-stairway_to_melon
-
-[![stairway_to_melon](./doc/display1.png)](https://youtu.be/FDA8QqUgdbo)
-
-nav_maze_static_01
-
-[![nav_maze_static_01](./doc/display2.png)](https://youtu.be/xHK0qBeH3-I)
+## Supplimentary Material 
+[Visually-Attentive UNREAL agent navigating the 3D maze ](https://sites.google.com/view/attendbeforeyouact)
 
 ## Network
 ![Network](./doc/network0.png)
