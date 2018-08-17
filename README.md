@@ -1,4 +1,8 @@
 # Visually Attentive UNREAL
+Motivation: Where do humans look while navigating in a 3D maze environment ? Does foveating around the regions where humans look helps the reinforcement learning process in the context of continual learning ? We hypothesise that knowing where to look in a task aids continual learning across tasks
+
+![Where do we look in an image](https://github.com/kkhetarpal/unrealwithattention/blob/master/Where%20Humans%20Look.png)
+
 We introduce the Visually-Attentive UNREAL agent 2 by foveating around the salient regions in each image. This is done in the base process of online A3C , as shown in the pseudo code in Algorithm 1 of the paper.
 
 ## About
@@ -8,7 +12,7 @@ Code accompanying paper "Attend Before you Act: Leveraging human visual attentio
 
 
 ## Supplimentary Material 
-![Visually-Attentive UNREAL agent navigating the 3D maze ](https://sites.google.com/view/attendbeforeyouact)
+![Project Page](https://sites.google.com/view/attendbeforeyouact)
 
 
 ## Result
