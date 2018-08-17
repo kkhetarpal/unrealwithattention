@@ -1,36 +1,32 @@
-# UNREAL
-
-[![CircleCI](https://circleci.com/gh/miyosuda/unreal.svg?style=svg)](https://circleci.com/gh/miyosuda/unreal)
+# Visually Attentive UNREAL
+We introduce the Visually-Attentive UNREAL agent 2 by foveating around the salient regions in each image. This is done in the base process of online A3C , as shown in the pseudo code in Algorithm 1 of the paper.
 
 ## About
 Code accompanying paper "Attend Before you Act: Leveraging human visual attention for continual learning" - at Lifelong Learning: A Reinforcement Learning Approach Workshop @ ICML 2018 
 
-Paper Link: 
+[Link to Paper](https://arxiv.org/abs/1807.09664) 
 
-Implemented with TensorFlow and DeepMind Lab environment.
 
 ## Supplimentary Material 
-[Visually-Attentive UNREAL agent navigating the 3D maze ](https://sites.google.com/view/attendbeforeyouact)
+![Visually-Attentive UNREAL agent navigating the 3D maze ](https://sites.google.com/view/attendbeforeyouact)
 
-## Network
-![Network](./doc/network0.png)
 
-All weights of convolution layers and LSTM layer are shared.
+## Result
+Learning with varying degrees of visual attention to navigate the 3D maze environment. Specific degrees of visual attention
+helps in learning better than baseline UNREAL agent. Here α = 0.69 speeds up the learning as compared to other settings for
+this instance of runs.
+
+![Learning with varying degrees of visual attention to navigate the 3D maze environment](https://github.com/kkhetarpal/unrealwithattention/blob/master/Different_Degrees_of_Foveation.png)
+
 
 ## Requirements
 
-- TensorFlow (Tested with r1.0)
+- TensorFlow
 - DeepMind Lab
 - numpy
 - cv2
 - pygame
 - matplotlib
-
-## Result
-"nav_maze_static_01" Level
-
-![nav_maze_static_01_score](experiments/baseline/Unreal_BaselineRun_ScorePlot.png)
-
 
 ## How to train
 First, download and install DeepMind Lab
@@ -43,7 +39,7 @@ https://github.com/deepmind/lab/blob/master/docs/build.md
 Clone this repo in lab directory.
 ```
 $ cd lab
-$ git clone https://github.com/miyosuda/unreal.git
+$ git clone https://github.com/kkhetarpal/unrealwithattention.git
 ```
 Add this bazel instruction at the end of `lab/BUILD` file
 
